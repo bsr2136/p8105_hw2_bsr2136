@@ -19,19 +19,19 @@ dir.create("files_for_hw2")
 
 ```{r problem 1a, results=FALSE}
 trash_wheel <- 
-  read_excel("./files_for_hw2/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
-             range = "A2:N338", sheet = "Mr. Trash Wheel")
+  read_excel("./files_for_hw2/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
+             range = "A2:N408", sheet = "Mr. Trash Wheel")
 
 trash_wheel <- trash_wheel %>% 
   janitor::clean_names() %>%
   filter(!is.na(dumpster)) %>%
   mutate(sports_balls = as.integer(round(sports_balls,0)))
   
-prec_2018 <- read_excel("./files_for_hw2/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+prec_2018 <- read_excel("./files_for_hw2/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
              range = "A3:B14", sheet = "2018 Precipitation",
              col_names = c("month","precipitation_inches"))
 
-prec_2017 <- read_excel("./files_for_hw2/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+prec_2017 <- read_excel("./files_for_hw2/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
              range = "A3:B14", sheet = "2017 Precipitation",
              col_names = c("month","precipitation_inches"))
 
@@ -51,7 +51,7 @@ precipitation_2017_2018 <- bind_rows(prec_2017,prec_2018) %>%
 ## The number of observations in the Mr. Trash Wheel sheet is
 nrow(trash_wheel)
 ## The variable dumpster gives a number from 1-285 that identifies which dumpster the data is referencing.
-## The variables month, year, and date give information on the date of trash collection by Mr. Trash wheel, which ranges from May 2015 to July 2018.
+## The variables month, year, and date give information on the date of trash collection by Mr. Trash wheel, which ranges from May 2015 to June 2019.
 ## The variables weight_tons and volume_cubic_yards give information on how much trash was collected.
 ```
 
@@ -59,7 +59,7 @@ nrow(trash_wheel)
 ## The number of observations in the combined precipitation dataset is
 nrow(precipitation_2017_2018)
 ## The variable precipitation_inches gives the amount of precipitation in inches.
-## The variables month and year give information on the date that precipitation fell in, and ranges from January 2017 to July 2018.
+## The variables month and year give information on the date that precipitation fell in, and ranges from January 2017 to December 2018.
 ```
 
 ```{r Problem 1d}
@@ -78,9 +78,45 @@ trash_wheel %>%
 ## Problem 2
 
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r problem 2a, results = FALSE}
+pols <- read_csv("./files_for_hw2/pols-month.csv")
+
+unemploy <- read_csv("./files_for_hw2/unemployment.csv")
+
+snp <- read_csv("./files_for_hw2/snp.csv")
+
+pols <- pols %>%
+  separate(mon, into = c("year","month","day"), sep = "-") %>%
+  mutate(month = month.name[as.integer(month)],
+         president = ifelse(prez_gop>=1,"gop",ifelse(prez_dem>=1,"dem",NA))
+                            ) %>%
+  select(year,month,president,everything(),-prez_gop,-prez_dem,-day)
+
+snp <- snp %>%
+  separate(date, into = c("month","day","year"), sep = "/") %>%
+  mutate(month = month.name[as.integer(month)]) %>%
+  select(year,month,close)
+
+test <- unemploy %>%
+  rename('1' = Jan,
+         '2' = Feb,
+         '3' = Mar,
+         '4' = Apr,
+         '5' = May,
+         '6' = Jun,
+         '7' = Jul,
+         '8' = Aug,
+         '9' = Sep,
+         '10' = Oct,
+         '11' = Nov,
+         '12' = Dec) %>%
+  pivot_longer(2:13, 
+               names_to = "month",
+               values_to = "unemploy_rate") %>%
+  mutate(month = month.name[as.integer(month)])
+
 ```
+
 
 ## Problem 3
 
