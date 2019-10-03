@@ -1,5 +1,7 @@
 ---
 title: "p8105_hw2_bsr2136"
+author: "Barik Rajpal"
+date: "October 4, 2019"
 output: github_document
 ---
 
@@ -17,7 +19,9 @@ dir.create("files_for_hw2")
 
 ## Problem 1
 
-```{r problem 1a, results=FALSE}
+### Loading and tidying the datasets
+
+```{r problem 1a, results=FALSE, message = FALSE}
 trash_wheel <- 
   read_excel("./files_for_hw2/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
              range = "A2:N408", sheet = "Mr. Trash Wheel")
@@ -47,11 +51,13 @@ precipitation_2017_2018 <- bind_rows(prec_2017,prec_2018) %>%
   mutate(month = month.name[month])
 ```
 
+### Describing the datsets
+
 ```{r Problem 1b}
 ## The number of observations in the Mr. Trash Wheel sheet is
 nrow(trash_wheel)
-## The variable dumpster gives a number from 1-285 that identifies which dumpster the data is referencing.
-## The variables month, year, and date give information on the date of trash collection by Mr. Trash wheel, which ranges from May 2015 to June 2019.
+## The variable dumpster gives a number from 1-344 that identifies which dumpster the data is referencing.
+## The variables month, year, and date give information on the date of trash collection by Mr. Trash wheel, which ranges from May 2014 to June 2019.
 ## The variables weight_tons and volume_cubic_yards give information on how much trash was collected.
 ```
 
@@ -59,8 +65,10 @@ nrow(trash_wheel)
 ## The number of observations in the combined precipitation dataset is
 nrow(precipitation_2017_2018)
 ## The variable precipitation_inches gives the amount of precipitation in inches.
-## The variables month and year give information on the date that precipitation fell in, and ranges from January 2017 to December 2018.
+## The variables month and year give information on the month and year that the precipitation fell in, and ranges from January 2017 to December 2018.
 ```
+
+### Answering questions about the datasets
 
 ```{r Problem 1d}
 ## The total amount of rainfall in 2018 (for available data) was
@@ -77,8 +85,9 @@ trash_wheel %>%
 
 ## Problem 2
 
+### Loading and tidying the datsets
 
-```{r problem 2a, results = FALSE}
+```{r problem 2a, results=FALSE, message = FALSE}
 pols <- read_csv("./files_for_hw2/pols-month.csv")
 
 unemploy <- read_csv("./files_for_hw2/unemployment.csv")
@@ -97,7 +106,7 @@ snp <- snp %>%
   mutate(month = month.name[as.integer(month)]) %>%
   select(year,month,close)
 
-test <- unemploy %>%
+unemploy <- unemploy %>%
   rename('1' = Jan,
          '2' = Feb,
          '3' = Mar,
@@ -113,10 +122,25 @@ test <- unemploy %>%
   pivot_longer(2:13, 
                names_to = "month",
                values_to = "unemploy_rate") %>%
-  mutate(month = month.name[as.integer(month)])
+  mutate(month = month.name[as.integer(month)],
+         Year = as.character(Year)) %>%
+  janitor::clean_names()
 
+
+fivethirtyeightdata <- left_join(pols, snp, by = c("year","month"))
+
+fivethirtyeightdata <- left_join(fivethirtyeightdata, unemploy, by = c("year","month"))
 ```
 
+### Describing the datasets 
+
+The pols-month dataset contained information on the partisan makeup of executive and legislative political positions in America from January 1947 to June 2015. It had 822 observations of 9 variables, and after cleaning it had the same dimensions because I separated out the date column into month, day, and year columns (+ 2 columns), created a new column that indicates whether the President was dem or gop (+ 1 column), then removed the columns for day, and the columns prez_gop and prez_dem (-3 columns), as the latter two were made redundant by the president column I had created.
+
+The snp dataset gives the close price of the S&P500 stock index on a given date, ranging from January 1950 to July 2015. It had 787 observations of 2 variables, date and close price. After cleaning it had 787 observations of 3 variables because I separated out the date column into month, day, and year columns (+ 2 columns), and then removed the day column (-1 column).
+
+The unemployment dataset gives the unemployment rate during a given month and year ranging from January 1948 to June 2015. It had 68 observations of 13 variables, as Year was one variable, and every individual month was another variable with the unemployment rate during that month in the given year being the value in the column. After cleaning, it had 816 observations of 3 variables, because I made the table longer by converting all the 12 different month columns into 1 longer column that indicates month, and also created a second column (unemploy_rate) to store the value previously held in the month columns (-12 columns, +2 columns).
+
+The final dataset combines the above three, and the pols-month and snp data are associated with a given month and year rather than an exact date in their original forms. The date range for the dataset is the same as the pols-month range, January 1947 to June 2015, as I left-joined the other two tables to this one. The final dataset has 822 observations of 11 variables. For a given month and year, it gives information including, the political affiliation of the president on one day in that month and year (president), the number of democrat and republican governors, senators, and house reprsentatives on that same day in that month and year (gov_dem, sen_dem, rep_dem, gov_gop, sen_gop, rep_gop), the close price of the S&P500 stock index on a day in the given month and year (close), and the unemployment rate during that given month and year (unemploy_rate). The values for close prior to January 1950 are NA, and the vaules for unemploy_rate prior to January 1948 are NA, beacuse we did not have data for those dates in those datasets. Also, because I did a left join, the data for July 2015 is not in the table because there is no data for that month and year in pols-month, even though it exists in snp. If I had done an full join to snp, I could have kept that information in the table, and all the pols-month and unemployment data would have been NA for that date. 
 
 ## Problem 3
 
