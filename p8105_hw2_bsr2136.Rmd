@@ -134,17 +134,81 @@ fivethirtyeightdata <- left_join(fivethirtyeightdata, unemploy, by = c("year","m
 
 ### Describing the datasets 
 
+#### Description of 3 individual datasets
+
 The pols-month dataset contained information on the partisan makeup of executive and legislative political positions in America from January 1947 to June 2015. It had 822 observations of 9 variables, and after cleaning it had the same dimensions because I separated out the date column into month, day, and year columns (+ 2 columns), created a new column that indicates whether the President was dem or gop (+ 1 column), then removed the columns for day, and the columns prez_gop and prez_dem (-3 columns), as the latter two were made redundant by the president column I had created.
 
 The snp dataset gives the close price of the S&P500 stock index on a given date, ranging from January 1950 to July 2015. It had 787 observations of 2 variables, date and close price. After cleaning it had 787 observations of 3 variables because I separated out the date column into month, day, and year columns (+ 2 columns), and then removed the day column (-1 column).
 
 The unemployment dataset gives the unemployment rate during a given month and year ranging from January 1948 to June 2015. It had 68 observations of 13 variables, as Year was one variable, and every individual month was another variable with the unemployment rate during that month in the given year being the value in the column. After cleaning, it had 816 observations of 3 variables, because I made the table longer by converting all the 12 different month columns into 1 longer column that indicates month, and also created a second column (unemploy_rate) to store the value previously held in the month columns (-12 columns, +2 columns).
 
+#### Description of final combined dataset
+
 The final dataset combines the above three, and the pols-month and snp data are associated with a given month and year rather than an exact date in their original forms. The date range for the dataset is the same as the pols-month range, January 1947 to June 2015, as I left-joined the other two tables to this one. The final dataset has 822 observations of 11 variables. For a given month and year, it gives information including, the political affiliation of the president on one day in that month and year (president), the number of democrat and republican governors, senators, and house reprsentatives on that same day in that month and year (gov_dem, sen_dem, rep_dem, gov_gop, sen_gop, rep_gop), the close price of the S&P500 stock index on a day in the given month and year (close), and the unemployment rate during that given month and year (unemploy_rate). The values for close prior to January 1950 are NA, and the vaules for unemploy_rate prior to January 1948 are NA, beacuse we did not have data for those dates in those datasets. Also, because I did a left join, the data for July 2015 is not in the table because there is no data for that month and year in pols-month, even though it exists in snp. If I had done an full join to snp, I could have kept that information in the table, and all the pols-month and unemployment data would have been NA for that date. 
 
 ## Problem 3
 
-```{r}
+### Loading a tidying the data
 
+```{r Problem 3, results = FALSE, message = FALSE}
+baby_names <- read_csv("./files_for_hw2/Popular_Baby_Names.csv")
+
+baby_names <- baby_names %>%
+  rename(year = `Year of Birth`,
+         name_of_child = `Child's First Name`) %>%
+  janitor::clean_names() %>%
+  mutate(gender = tolower(gender),
+         name_of_child = tolower(name_of_child),
+         ethnicity = tolower(
+           ifelse(ethnicity == "ASIAN AND PACI","ASIAN AND PACIFIC ISLANDER",
+                  ifelse(ethnicity == "BLACK NON HISP","BLACK NON HISPANIC",
+                         ifelse(ethnicity == "WHITE NON HISP","WHITE NON HISPANIC",ethnicity)
+                         )
+                  )
+         )) %>%
+  distinct()
+
+```
+
+### Rank of Olivia over time by ethnicity
+
+```{r problem 3 olivia}
+
+olivia <- baby_names %>%
+  filter(name_of_child == "olivia",
+         gender == "female") %>%
+  select(-gender,-name_of_child,-count) %>%
+  pivot_wider(names_from = year,
+              values_from = rank) %>%
+  select(1,7,6,5,4,3,2)
+
+knitr::kable(olivia)
+```
+
+### Most popular boys name over time by ethnicity
+
+```{r}
+popular_boys_names <- baby_names %>%
+  filter(rank==1,gender=="male") %>%
+  select(-gender,-count,-rank) %>%
+  pivot_wider(names_from = year,
+              values_from = name_of_child) %>%
+  select(1,7,6,5,4,3,2)
+
+knitr::kable(popular_boys_names)
+```
+
+
+### Scatterplot of white non-hispanic males born in 2016
+
+```{r}
+white_males <- baby_names %>%
+  filter(year==2016,
+         ethnicity == "white non hispanic",
+         gender == "male") %>%
+  ggplot(aes(x=rank,y=count)) + 
+  geom_point()
+
+white_males
 ```
 
